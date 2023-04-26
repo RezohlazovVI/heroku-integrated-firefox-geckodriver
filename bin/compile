@@ -19,7 +19,7 @@ IHx8ICA3ICB8IDcgICA3IA0KIV9fISAgICAhX19fISAhX18hX18hIV
 IV9fIV9fISFfXyFfXyEgICFfXyEgICFfX19fXyEhX18hX18hICFfX1
 8hIA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
 ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIC
-AgICAgICAgICAgICAgICAgICAgICAgICAgICAgIA==" |base64 -d
+AgICAgICAgICAgICAgICAgICAgICAgICAgICAgIA==" | base64 -d
 
 echo -en '\n'
 
@@ -34,7 +34,11 @@ BUILD_DIR=$1
 CACHE_DIR=$2
 ENV_DIR=$3
 
-LP_DIR=`cd $(dirname $0); cd ..; pwd`
+LP_DIR=$(
+  cd $(dirname $0)
+  cd ..
+  pwd
+)
 
 function error() {
   echo " !     $*" >&2
@@ -48,8 +52,8 @@ function topic() {
 function indent() {
   c='s/^/       /'
   case $(uname) in
-    Darwin) sed -l "$c";;
-    *)      sed -u "$c";;
+    Darwin) sed -l "$c" ;;
+    *) sed -u "$c" ;;
   esac
 }
 
@@ -69,9 +73,9 @@ FILE_NAME_GECKODRIVER=${ARCHIVE_NAME_GECKODRIVER}-v${VERSION_GECKODRIVER}-${PLAT
 BUILDPACK_FIREFOX_PACKAGE="https://download.mozilla.org/?product=firefox-${VERSION_FIREFOX}-SSL&os=${PLATFORM}&lang=${LANG}"
 BUILDPACK_GECKODRIVER_PACKAGE="https://github.com/mozilla/geckodriver/releases/download/v${VERSION_GECKODRIVER}/${FILE_NAME_GECKODRIVER}"
 
-# Install correct dependencies according to $STACK	
-case "$STACK" in	
-  "heroku-16" | "heroku-18" | "heroku-20")	
+# Install correct dependencies according to $STACK
+case "$STACK" in
+  "heroku-16" | "heroku-18" | "heroku-20" | "heroku-22")
     PACKAGES="	
       libappindicator1	
       libasound2	
@@ -97,9 +101,10 @@ case "$STACK" in
       libxtst6	
       fonts-liberation	
     "
-    ;;	
-  *)	
-    error "Heroku stack must be 'heroku-16', heroku-18 or 'heroku-20'"	
+    ;;
+  *)
+    error "Heroku stack must be 'heroku-16', heroku-18 or 'heroku-20'"
+    ;;
 esac
 
 if [ ! -f $CACHE_DIR/PURGED_CACHE_V1 ]; then
@@ -192,7 +197,7 @@ export PKG_CONFIG_PATH="$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu/pkgconfig:$BUIL
 export TMPDIR="\$BUILD_DIR/tmp"
 
 #Give environment to later buildpacks
-export | grep -E -e ' (PATH|LD_LIBRARY_PATH|LIBRARY_PATH|INCLUDE_PATH|CPATH|CPPPATH|PKG_CONFIG_PATH)='  > "$LP_DIR/export"
+export | grep -E -e ' (PATH|LD_LIBRARY_PATH|LIBRARY_PATH|INCLUDE_PATH|CPATH|CPPPATH|PKG_CONFIG_PATH)=' >"$LP_DIR/export"
 
 topic "Rewrite package-config files"
 find $BUILD_DIR/.apt -type f -ipath '*/pkgconfig/*.pc' | xargs --no-run-if-empty -n 1 sed -i -e 's!^prefix=\(.*\)$!prefix='"$BUILD_DIR"'/.apt\1!g'
